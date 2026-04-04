@@ -1,0 +1,72 @@
+# 1. Testing PRIVILEGED_CONTAINER, RUN_AS_ROOT, and ALLOW_PRIVILEGE_ESCALATION
+apiVersion: v1
+kind: Pod
+metadata:
+  name: privileged-root-pod
+spec:
+  containers:
+  - name: alpine
+    image: alpine:3.18
+    securityContext:
+      privileged: true                # Triggers PRIVILEGED_CONTAINER
+      runAsUser: 0                    # Triggers RUN_AS_ROOT
+      allowPrivilegeEscalation: true  # Triggers ALLOW_PRIVILEGE_ESCALATION
+---
+# 2. Testing HOST_NETWORK and DANGEROUS_CAPABILITIES
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: host-network-deployment
+spec:
+  template:
+    spec:
+      hostNetwork: true               # Triggers HOST_NETWORK
+      containers:
+      - name: net-tool
+        image: busybox:1.36
+        securityContext:
+          capabilities:
+            add:
+            - NET_ADMIN               # Triggers DANGEROUS_CAPABILITIES
+            - SYS_ADMIN               # Triggers DANGEROUS_CAPABILITIES
+---
+# 3. Testing MISSING_RESOURCE_LIMITS and LATEST_IMAGE_TAG
+apiVersion: v1
+kind: Pod
+metadata:
+  name: resource-image-test
+spec:
+  containers:
+  - name: web-server
+    image: nginx:latest              # Triggers LATEST_IMAGE_TAG
+    resources:
+      requests:
+        cpu: "100m"
+      # Missing limits configuration -> Triggers MISSING_RESOURCE_LIMITS
+---
+# 4. Testing WRITABLE_ROOT_FS and MISSING_SECURITY_CONTEXT
+apiVersion: v1
+kind: Pod
+metadata:
+  name: security-context-test
+spec:
+  containers:
+  - name: app
+    image: app:v1.0.0
+    securityContext:
+      readOnlyRootFilesystem: false   # Triggers WRITABLE_ROOT_FS
+  # Missing pod-level securityContext and the container one is incomplete -> Triggers MISSING_SECURITY_CONTEXT
+---
+# 5. Testing LB_SERVICE_EXPOSURE
+apiVersion: v1
+kind: Service
+metadata:
+  name: public-service
+spec:
+  type: LoadBalancer                  # Triggers LB_SERVICE_EXPOSURE
+  selector:
+    app: secure-app
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 9376
