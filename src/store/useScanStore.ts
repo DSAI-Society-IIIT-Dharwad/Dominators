@@ -59,15 +59,19 @@ export interface ScanData {
 interface ScanStore {
   scanData: ScanData | null;
   yamlSource: string;
+  sourceInfo: string | null;
   setScanData: (data: ScanData | null) => void;
   setYamlSource: (yaml: string) => void;
+  setSourceInfo: (info: string | null) => void;
   clearScanData: () => void;
 }
 
 export const useScanStore = create<ScanStore>((set) => ({
   scanData: null,
   yamlSource: '',
+  sourceInfo: null,
   setScanData: (data) => set({ scanData: data }),
   setYamlSource: (yaml) => set({ yamlSource: yaml }),
-  clearScanData: () => set({ scanData: null, yamlSource: '' }),
+  setSourceInfo: (info) => set({ sourceInfo: info }),
+  clearScanData: () => set({ scanData: null, yamlSource: '', sourceInfo: null }),
 }));

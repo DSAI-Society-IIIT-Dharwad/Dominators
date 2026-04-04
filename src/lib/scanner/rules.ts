@@ -97,12 +97,39 @@ export const securityRules: Rule[] = [
     recommendation: 'Implement a comprehensive securityContext at both the Pod and Container levels.'
   },
   {
-    id: 'LB_SERVICE_EXPOSURE',
-    description: 'Service type LoadBalancer detected (public exposure risk)',
-    severity: 'LOW',
-    resourceTypes: ['Service'],
+    id: 'SENSITIVE_CONFIG',
+    description: 'Sensitive information (password, token, key) detected in configuration',
+    severity: 'HIGH',
+    check: (resource) => {
+      const sensitiveKeys = ['password', 'secret', 'token', 'api_key', 'apikey', 'access_key'];
+      const hasSensitiveEnv = getAllContainers(resource).some(c => 
+        c?.env?.some((e: any) => sensitiveKeys.some(key => e.name?.toLowerCase().includes(key)))
+      );
+      const hasSensitiveData = resource?.kind === 'ConfigMap' && resource?.data && 
+        Object.keys(resource.data).some(k => sensitiveKeys.some(key => k.toLowerCase().includes(key)));
+      return hasSensitiveEnv || hasSensitiveData;
+    },
+    recommendation: 'Use Kubernetes Secrets or a dedicated secret management solution instead of ConfigMaps or environment variables for sensitive data.'
+  },
+  {
+    id: 'CLUSTER_ADMIN_RBAC',
+    description: 'Highly privileged RBAC binding detected (cluster-admin)',
+    severity: 'HIGH',
+    resourceTypes: ['ClusterRoleBinding', 'RoleBinding'],
     check: (resource) => 
-      resource?.kind === 'Service' && resource?.spec?.type === 'LoadBalancer',
-    recommendation: 'Ensure LoadBalancer services are restricted by security groups or use Ingress controllers.'
+      (resource?.kind === 'ClusterRoleBinding' || resource?.kind === 'RoleBinding') && 
+      (resource?.roleRef?.name === 'cluster-admin' || resource?.roleRef?.name?.toLowerCase()?.includes('admin')),
+    recommendation: 'Use the Principle of Least Privilege. Avoid granting cluster-admin unless absolutely necessary.'
+  },
+  {
+    id: 'HOST_PATH_VOLUME',
+    description: 'HostPath volume detected (host breakout risk)',
+    severity: 'HIGH',
+    check: (resource) => {
+      // Logic: Pod/Deployment -> spec.volumes. Small check for path: / as extremely high risk.
+      const volumes = resource?.spec?.volumes || resource?.spec?.template?.spec?.volumes || [];
+      return volumes.some((v: any) => v.hostPath);
+    },
+    recommendation: 'Avoid hostPath volumes as they allow container processes to access the host filesystem. Use persistent volume claims if possible.'
   }
 ];

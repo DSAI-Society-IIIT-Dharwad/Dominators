@@ -1,0 +1,71 @@
+from pydantic import BaseModel, Field
+from typing import List, Optional
+from datetime import datetime
+
+class PodInfo(BaseModel):
+    name: str
+    namespace: str
+    status: str
+    images: List[str]
+
+class DeploymentInfo(BaseModel):
+    name: str
+    namespace: str
+    replicas: int
+    available_replicas: int
+
+class SecurityIssue(BaseModel):
+    name: str
+    namespace: str
+    risk: str
+    issues: List[str]
+
+class ScanResult(BaseModel):
+    timestamp: str
+    summary: dict
+    findings: List[SecurityIssue]
+
+# YAML Scanner Models
+class YamlScanRequest(BaseModel):
+    yaml_content: str
+
+class YamlFinding(BaseModel):
+    name: str
+    namespace: str
+    kind: str
+    risk: str
+    issues: List[str]
+
+class YamlSummary(BaseModel):
+    total_resources: int
+    high: int
+    medium: int
+    low: int
+
+class YamlScanResponse(BaseModel):
+    mode: str = "YAML_SCAN"
+    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
+    summary: YamlSummary
+    findings: List[YamlFinding]
+
+# Real-Time Cluster Scanner Models
+class ClusterFinding(BaseModel):
+    name: str
+    namespace: str
+    kind: str
+    risk: str
+    issues: List[str]
+
+class ClusterSummary(BaseModel):
+    total_resources: int
+    high: int
+    medium: int
+    low: int
+
+class ClusterScanResponse(BaseModel):
+    mode: str = "CLUSTER_SCAN"
+    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
+    last_scan_time: str
+    total_pods_scanned: int
+    summary: ClusterSummary
+    findings: List[ClusterFinding]

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ShieldAlert, 
@@ -6,13 +6,14 @@ import {
   RotateCcw, 
   FileCode, 
   AlertTriangle, 
-  Upload 
+  Upload,
+  CloudIcon
 } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { useScanStore, ScanData } from '../store/useScanStore';
 import { scanManifest, calculateRiskScore as getRiskScore } from '../lib/scanner/engine';
-import { parseYaml } from '../lib/scanner/utils';
+import { parseYaml, sanitizeYamlSource } from '../lib/scanner/utils';
 import { 
   generateInfrastructure, 
   generateWeakPoints, 
@@ -20,6 +21,12 @@ import {
   generateRecommendations,
   generateMisconfigurations
 } from '../lib/scanner/intelligence';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 const SAMPLE_YAML = `apiVersion: v1
 kind: Pod
@@ -50,14 +57,29 @@ export const YAMLAnalyzer: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const navigate = useNavigate();
+  const sourceInfo = useScanStore((state) => state.sourceInfo);
 
   const results = (scanData?.misconfigurations || []) as any[];
   const fileName = scanData?.fileName || '';
   const hasScanned = scanData !== null;
 
+  // Auto-analyze if loaded from cluster
+  useEffect(() => {
+    if (yaml && sourceInfo && !hasScanned && !isAnalyzing) {
+      handleAnalyze();
+    }
+  }, [yaml, sourceInfo, hasScanned]);
+
   const handleAnalyze = (content?: string) => {
-    const yamlToAnalyze = (content !== undefined ? content : yaml) || '';
+    let yamlToAnalyze = (content !== undefined ? content : yaml) || '';
     if (!yamlToAnalyze.trim()) return;
+    
+    // Auto-sanitize common Python-polluted YAML from cluster extracts
+    const sanitized = sanitizeYamlSource(yamlToAnalyze);
+    if (sanitized !== yamlToAnalyze) {
+      yamlToAnalyze = sanitized;
+      setYaml(sanitized);
+    }
     
     setIsAnalyzing(true);
     if (content !== undefined) setYaml(content);
@@ -128,6 +150,29 @@ export const YAMLAnalyzer: React.FC = () => {
     setScanData(null);
   };
 
+  const handleLoadFromCluster = async () => {
+    setIsAnalyzing(true);
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/cluster/yaml`);
+      if (!response.ok) throw new Error('Failed to fetch cluster YAML');
+      
+      const data = await response.json();
+      if (data.yaml) {
+        setYaml(data.yaml);
+        setScanData(null);
+      } else {
+        alert("No pods found in the cluster (excluding kube-system).");
+      }
+    } catch (err) {
+      console.error('Cluster fetch error:', err);
+      alert("Error connecting to cluster. Ensure KubeShield backend is running and cluster is reachable.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   return (
     <div className="space-y-6 h-[calc(100vh-12rem)] flex flex-col">
        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -158,6 +203,14 @@ export const YAMLAnalyzer: React.FC = () => {
              Load Template
            </button>
            <button 
+             onClick={handleLoadFromCluster}
+             disabled={isAnalyzing}
+             className="px-4 py-2 bg-gray-900 border border-indigo-500/30 text-indigo-400 rounded-xl font-bold text-sm hover:bg-indigo-500/10 transition-all flex items-center gap-2 disabled:opacity-50"
+           >
+             <CloudIcon className={cn("w-4 h-4", isAnalyzing && "animate-pulse")} />
+             Load From Cluster
+           </button>
+           <button 
              onClick={() => handleAnalyze()}
              disabled={isAnalyzing || !yaml}
              className="px-4 py-2 bg-cyan-500 text-black rounded-xl font-bold text-sm shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:bg-cyan-400 transition-all flex items-center gap-2 disabled:opacity-50"
@@ -172,7 +225,14 @@ export const YAMLAnalyzer: React.FC = () => {
           <Card className="flex-1 flex flex-col border-gray-800/50 bg-black/60 shadow-2xl relative overflow-hidden h-full">
              <CardHeader className="py-4 border-b border-gray-800 bg-gray-900/20 backdrop-blur-sm z-10">
                 <div className="flex items-center justify-between">
-                   <span className="text-xs font-mono text-gray-500 uppercase tracking-widest">Input Manifest / YAML Source</span>
+                    <div className="flex items-center gap-4">
+                       <span className="text-xs font-mono text-gray-500 uppercase tracking-widest">Input Manifest / YAML Source</span>
+                       {sourceInfo && (
+                          <Badge variant="info" className="bg-indigo-500/10 text-indigo-400 border-indigo-500/20 py-0.5 px-2 text-[10px]">
+                             {sourceInfo}
+                          </Badge>
+                       )}
+                    </div>
                     <div className="flex gap-2">
                        <button 
                          onClick={() => {

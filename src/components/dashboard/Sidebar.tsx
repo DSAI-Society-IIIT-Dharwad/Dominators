@@ -12,6 +12,7 @@ import {
   X,
   Target,
   Zap,
+  Radar,
   Network,
   ChevronLeft,
   ChevronRight
@@ -54,6 +55,11 @@ export const Sidebar: React.FC = () => {
       icon: LayoutDashboard,
       label: 'Dashboard',
       href: '/dashboard'
+    },
+    {
+      icon: Radar,
+      label: 'Cluster Scan',
+      href: '/dashboard/cluster-scan'
     },
     {
       icon: Route,

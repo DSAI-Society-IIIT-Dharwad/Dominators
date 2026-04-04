@@ -1,20 +1,34 @@
 import React from 'react';
 import { 
-  ShieldCheck, 
   ArrowRight,
   TrendingUp,
   Zap,
   RefreshCw,
-  Search
+  Search,
+  Loader2,
+  CheckCircle2,
+  ShieldCheck
 } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
-import { useScanStore } from '../store/useScanStore';
+import { Modal } from '../components/ui/Modal';
+import { useScanStore, Recommendation } from '../store/useScanStore';
 import { useNavigate } from 'react-router-dom';
 
 export const Recommendations: React.FC = () => {
   const scanData = useScanStore((state) => state.scanData);
   const navigate = useNavigate();
+  const [fixingId, setFixingId] = React.useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = React.useState<Recommendation | null>(null);
+
+  const handleImplementFix = (rec: Recommendation) => {
+    setFixingId(rec.id);
+    // Simulate API call
+    setTimeout(() => {
+      setFixingId(null);
+      setShowSuccess(rec);
+    }, 2000);
+  };
 
   const isEmpty = !scanData || scanData.recommendations.length === 0;
   const recommendations = scanData?.recommendations || [];
@@ -85,15 +99,59 @@ export const Recommendations: React.FC = () => {
                       <Zap className="w-4 h-4 text-yellow-500" />
                     </div>
                   </div>
-                  <button className="w-full py-4 bg-gray-900 border border-gray-800 text-emerald-400 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-gray-800 transition-all flex items-center justify-center gap-3 group/btn hover:border-emerald-500/40">
-                    Implement Fix
-                    <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                  <button 
+                    onClick={() => handleImplementFix(rec)}
+                    disabled={!!fixingId}
+                    className="w-full py-4 bg-gray-900 border border-gray-800 text-emerald-400 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-gray-800 transition-all flex items-center justify-center gap-3 group/btn hover:border-emerald-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {fixingId === rec.id ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Applying...
+                      </>
+                    ) : (
+                      <>
+                        Implement Fix
+                        <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                      </>
+                    )}
                   </button>
                 </div>
               </CardContent>
             </Card>
           ))}
       </div>
+
+      <Modal
+        isOpen={!!showSuccess}
+        onClose={() => setShowSuccess(null)}
+        title="Remediation Successful"
+        maxWidth="md"
+      >
+        {showSuccess && (
+          <div className="text-center space-y-6 py-4">
+            <div className="w-20 h-20 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+            </div>
+            <div>
+              <h4 className="text-xl font-black text-white uppercase tracking-tight mb-2">Posture Updated</h4>
+              <p className="text-sm text-gray-400">
+                The security recommendation <span className="text-emerald-400 font-bold">"{showSuccess.title}"</span> has been successfully applied to your cluster configuration.
+              </p>
+            </div>
+            <div className="p-4 bg-gray-900 rounded-2xl border border-gray-800 text-left">
+              <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Impact Analysis</div>
+              <p className="text-xs text-gray-300 font-medium">{showSuccess.impact}</p>
+            </div>
+            <button 
+              onClick={() => setShowSuccess(null)}
+              className="w-full py-4 bg-emerald-500 text-black font-black uppercase tracking-widest rounded-2xl hover:bg-emerald-400 transition-all"
+            >
+              Exfiltration Complete
+            </button>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

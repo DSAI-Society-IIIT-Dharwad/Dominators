@@ -4,16 +4,20 @@ import {
   Search, 
   ArrowRight,
   Info,
-  RefreshCw
+  RefreshCw,
+  Code,
+  Terminal
 } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
-import { useScanStore } from '../store/useScanStore';
+import { Modal } from '../components/ui/Modal';
+import { useScanStore, Misconfiguration } from '../store/useScanStore';
 import { useNavigate } from 'react-router-dom';
 
 export const Misconfigurations: React.FC = () => {
   const scanData = useScanStore((state) => state.scanData);
   const navigate = useNavigate();
+  const [selectedFix, setSelectedFix] = React.useState<Misconfiguration | null>(null);
 
   const isEmpty = !scanData || scanData.misconfigurations.length === 0;
   const vulnerabilities = scanData?.misconfigurations || [];
@@ -108,7 +112,10 @@ export const Misconfigurations: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button className="text-xs font-bold text-cyan-500 hover:text-cyan-400 transition-colors flex items-center gap-2 ml-auto group/btn">
+                        <button 
+                          onClick={() => setSelectedFix(log)}
+                          className="text-xs font-bold text-cyan-500 hover:text-cyan-400 transition-colors flex items-center gap-2 ml-auto group/btn"
+                        >
                           View Fix 
                           <ArrowRight className="w-3 h-3 group-hover/btn:translate-x-1 transition-transform" />
                         </button>
@@ -120,6 +127,56 @@ export const Misconfigurations: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      <Modal
+        isOpen={!!selectedFix}
+        onClose={() => setSelectedFix(null)}
+        title="Remediation Script"
+        maxWidth="lg"
+      >
+        {selectedFix && (
+          <div className="space-y-6">
+            <div>
+              <h4 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Issue</h4>
+              <p className="text-white font-bold">{selectedFix.title}</p>
+            </div>
+            
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-sm font-bold text-gray-500 uppercase tracking-widest">Recommended Fix</h4>
+                <div className="flex items-center gap-2 px-2 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded text-[10px] font-bold text-cyan-400">
+                  <Terminal className="w-3 h-3" />
+                  YAML MANIFEST
+                </div>
+              </div>
+              <div className="relative group">
+                <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                   <button className="p-2 bg-gray-800 rounded-lg text-gray-400 hover:text-white border border-gray-700">
+                     <Code className="w-4 h-4" />
+                   </button>
+                </div>
+                <pre className="p-6 bg-black rounded-2xl border border-gray-800 font-mono text-sm text-cyan-50/80 overflow-x-auto whitespace-pre-wrap leading-relaxed">
+                  {selectedFix.fix}
+                </pre>
+              </div>
+            </div>
+
+            <div className="p-4 bg-yellow-500/5 border border-yellow-500/20 rounded-2xl flex items-start gap-3">
+              <Info className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
+              <p className="text-xs text-yellow-200/70 leading-relaxed font-medium">
+                Applying this configuration will resolve the policy violation. Ensure you test in a development namespace before deploying to production.
+              </p>
+            </div>
+
+            <button 
+              onClick={() => setSelectedFix(null)}
+              className="w-full py-4 bg-cyan-500 text-black font-black uppercase tracking-widest rounded-2xl hover:bg-cyan-400 transition-all shadow-[0_0_20px_rgba(6,182,212,0.2)]"
+            >
+              Close Remediation
+            </button>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

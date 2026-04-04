@@ -4,16 +4,21 @@ import {
   ArrowRight,
   RefreshCw,
   Zap,
-  Target
+  Target,
+  Skull,
+  ShieldAlert,
+  AlertTriangle
 } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
-import { useScanStore } from '../store/useScanStore';
+import { Modal } from '../components/ui/Modal';
+import { useScanStore, WeakPoint } from '../store/useScanStore';
 import { useNavigate } from 'react-router-dom';
 
 export const WeakPoints: React.FC = () => {
   const scanData = useScanStore((state) => state.scanData);
   const navigate = useNavigate();
+  const [selectedPoint, setSelectedPoint] = React.useState<WeakPoint | null>(null);
 
   const isEmpty = !scanData || scanData.weakPoints.length === 0;
   const vulnerabilities = scanData?.weakPoints || [];
@@ -89,7 +94,10 @@ export const WeakPoints: React.FC = () => {
                     <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Threat Level</span>
                     <span className="text-xs text-gray-300 font-bold uppercase">{point.severity} Risk</span>
                   </div>
-                  <button className="flex items-center gap-2 text-xs font-bold text-red-400 hover:text-red-300 transition-all uppercase tracking-widest group/btn">
+                  <button 
+                    onClick={() => setSelectedPoint(point)}
+                    className="flex items-center gap-2 text-xs font-bold text-red-400 hover:text-red-300 transition-all uppercase tracking-widest group/btn"
+                  >
                     Exploit Details
                     <ArrowRight className="w-3 h-3 group-hover/btn:translate-x-1 transition-transform" />
                   </button>
@@ -98,6 +106,75 @@ export const WeakPoints: React.FC = () => {
             </Card>
           ))}
       </div>
+
+      <Modal
+        isOpen={!!selectedPoint}
+        onClose={() => setSelectedPoint(null)}
+        title="Exploit Intelligence"
+        maxWidth="lg"
+      >
+        {selectedPoint && (
+          <div className="space-y-6">
+            <div className="flex items-start gap-4 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
+              <Skull className="w-10 h-10 text-red-500 shrink-0" />
+              <div>
+                <h4 className="font-black text-white uppercase tracking-tight">{selectedPoint.title}</h4>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant={selectedPoint.severity}>{selectedPoint.severity} RISK</Badge>
+                  <span className="text-[10px] text-gray-500 font-mono">ID: {selectedPoint.id.toUpperCase()}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <h5 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                  <ShieldAlert className="w-3 h-3 text-red-400" />
+                  Threat Description
+                </h5>
+                <p className="text-sm text-gray-300 leading-relaxed bg-black/40 p-4 rounded-xl border border-gray-800/50">
+                  {selectedPoint.description}
+                </p>
+              </div>
+
+              <div>
+                <h5 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                  <AlertTriangle className="w-3 h-3 text-yellow-500" />
+                  Potential Impact
+                </h5>
+                <p className="text-sm text-gray-300 leading-relaxed bg-black/40 p-4 rounded-xl border border-gray-800/50">
+                  {selectedPoint.impact}
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-gray-900 border border-gray-800 rounded-2xl">
+              <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-3">Attack Surface Matrix</div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] text-gray-400 uppercase">Exploitability</span>
+                  <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-red-500 w-4/5" />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] text-gray-400 uppercase">Complexity</span>
+                  <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-emerald-500 w-1/4" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => setSelectedPoint(null)}
+              className="w-full py-4 bg-red-500 text-white font-black uppercase tracking-widest rounded-2xl hover:bg-red-400 transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+            >
+              Close Intel Report
+            </button>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

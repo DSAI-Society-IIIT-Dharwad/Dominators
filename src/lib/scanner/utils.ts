@@ -68,3 +68,22 @@ export const getInitContainers = (resource: any): any[] => {
 export const getAllContainers = (resource: any): any[] => {
   return [...getContainers(resource), ...getInitContainers(resource)];
 };
+
+/**
+ * Sanitize YAML source to handle corrupted Python-flavoured manifests.
+ * Strips !!python/object tags and leading underscores from keys.
+ */
+export const sanitizeYamlSource = (content: string): string => {
+  if (!content) return '';
+  
+  let sanitized = content;
+  
+  // 1. Strip !!python/object:[^ ]+ tags
+  sanitized = sanitized.replace(/!!python\/object:[\w.]+/g, '');
+  
+  // 2. Strip _ prefixes from keys (e.g., _privileged: -> privileged:)
+  // Look for pattern: optional spaces + _ + word + : + space
+  sanitized = sanitized.replace(/^(\s*)_(\w+:)/gm, '$1$2');
+  
+  return sanitized;
+};

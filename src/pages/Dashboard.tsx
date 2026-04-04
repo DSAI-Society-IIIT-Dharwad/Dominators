@@ -8,8 +8,12 @@ import {
   Activity,
   ShieldAlert,
   Search,
-  FileSearch
+  FileSearch,
+  History,
+  Clock,
+  ChevronRight
 } from 'lucide-react';
+import { Modal } from '../components/ui/Modal';
 import { 
   XAxis, 
   YAxis, 
@@ -24,10 +28,23 @@ import { Card, CardContent, CardHeader } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { useScanStore } from '../store/useScanStore';
 import { useNavigate } from 'react-router-dom';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 export const Dashboard: React.FC = () => {
   const scanData = useScanStore((state) => state.scanData);
   const navigate = useNavigate();
+  const [isHistoryOpen, setIsHistoryOpen] = React.useState(false);
+
+  const mockHistory = [
+    { id: '1', date: '2024-04-04 10:30', score: 85, file: 'deployment-v1.yaml' },
+    { id: '2', date: '2024-04-03 15:45', score: 92, file: 'service-auth.yaml' },
+    { id: '3', date: '2024-04-02 09:12', score: 88, file: 'ingress-prod.yaml' },
+  ];
 
   if (!scanData) {
     return (
@@ -82,9 +99,57 @@ export const Dashboard: React.FC = () => {
             <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />
             Live View
           </button>
-          <button className="px-4 py-2 text-gray-400 hover:text-white rounded-lg text-sm font-medium transition-colors">Historical</button>
+          <button 
+            onClick={() => setIsHistoryOpen(true)}
+            className="px-4 py-2 text-gray-400 hover:text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+          >
+            <History className="w-4 h-4" />
+            Historical
+          </button>
         </div>
       </div>
+
+      <Modal
+        isOpen={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+        title="Analysis History"
+        maxWidth="lg"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-400 mb-6">Review your previous security scans and risk profile trends.</p>
+          <div className="space-y-3">
+            {mockHistory.map((item) => (
+              <div key={item.id} className="p-4 bg-black/40 border border-gray-800 rounded-2xl flex items-center justify-between group hover:border-cyan-500/30 transition-all">
+                <div className="flex items-center gap-4">
+                  <div className="p-2 bg-gray-900 rounded-xl border border-gray-800">
+                    <Clock className="w-5 h-5 text-gray-500" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-white group-hover:text-cyan-400 transition-colors uppercase tracking-tight">{item.file}</div>
+                    <div className="text-[10px] text-gray-500 font-mono">{item.date}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-6">
+                  <div className="text-right">
+                    <div className="text-xs text-gray-500 font-bold uppercase tracking-widest">Score</div>
+                    <div className={cn(
+                      "text-xl font-black",
+                      item.score > 90 ? "text-emerald-400" : "text-yellow-400"
+                    )}>{item.score}</div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-gray-700 group-hover:text-cyan-500 transition-colors" />
+                </div>
+              </div>
+            ))}
+          </div>
+          <button 
+            onClick={() => setIsHistoryOpen(false)}
+            className="w-full py-4 mt-4 bg-cyan-500 text-black font-black uppercase tracking-widest rounded-2xl hover:bg-cyan-400 transition-all"
+          >
+            Close History
+          </button>
+        </div>
+      </Modal>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

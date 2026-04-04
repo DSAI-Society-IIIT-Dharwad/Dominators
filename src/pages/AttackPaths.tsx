@@ -57,7 +57,8 @@ export const AttackPaths: React.FC = () => {
       { id: 'external internet', name: 'External Internet', type: 'loadbalancer', risk: 'low', position: { x: 0, y: 0 } },
       { id: 'host node', name: 'Host Node', type: 'node', risk: 'critical', position: { x: 1000, y: 300 } },
       { id: 'cluster ingress', name: 'Cluster Ingress', type: 'loadbalancer', risk: 'medium', position: { x: 250, y: 0 } },
-      { id: 'kube-api server', name: 'Kube-API Server', type: 'node', risk: 'critical', position: { x: 800, y: -100 } }
+      { id: 'kube-api server', name: 'Kube-API Server', type: 'node', risk: 'critical', position: { x: 800, y: -100 } },
+      { id: 'sensitive credentials', name: 'Sensitive Credentials', type: 'secret', risk: 'critical', position: { x: 1000, y: 0 } }
     ];
 
     const realNodes = scanData.infrastructure.graphNodes.map((n, i) => {

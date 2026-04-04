@@ -17,7 +17,7 @@ export const generateInfrastructure = (resources: any[]) => {
     let type: any = 'node';
     if (meta.kind === 'Pod' || meta.kind === 'Deployment' || meta.kind === 'StatefulSet') type = 'pod';
     else if (meta.kind === 'Service') type = 'service';
-    else if (meta.kind === 'Secret') type = 'secret';
+    else if (meta.kind === 'Secret' || meta.kind === 'ConfigMap') type = 'secret';
     else if (meta.kind === 'Ingress') type = 'loadbalancer';
 
     nodes.push({
@@ -48,6 +48,27 @@ export const generateInfrastructure = (resources: any[]) => {
             }
           }
         }
+      });
+    }
+
+    // RBAC Subjects as Nodes
+    if ((res.kind === 'ClusterRoleBinding' || res.kind === 'RoleBinding') && res.subjects) {
+      res.subjects.forEach((sub: any) => {
+        const subId = `${sub.kind}-${sub.name}`.toLowerCase();
+        if (!nodes.find(n => n.id === subId)) {
+          nodes.push({
+            id: subId,
+            name: sub.name,
+            type: sub.kind === 'ServiceAccount' ? 'pod' : 'node',
+            status: 'active'
+          });
+        }
+        edges.push({
+          id: `edge-${subId}-${id}`,
+          source: subId,
+          target: id,
+          label: 'binds-to'
+        });
       });
     }
   });
@@ -111,54 +132,85 @@ export const generateWeakPoints = (findings: Finding[]): WeakPoint[] => {
 export const generateAttackPaths = (findings: Finding[], resources: any[]): AttackPath[] => {
   const paths: AttackPath[] = [];
   
-  // Add a default entry point
-  paths.push({
-    id: 'ap-entry',
-    source: 'External Internet',
-    target: 'Cluster Ingress',
-    description: 'Attack starts from external network scanning public endpoints.',
-    threatLevel: 'low'
-  });
+  // 1. Entry Point Detection
+  const hasIngress = resources.some(r => r.kind === 'Ingress');
+  const publicServices = resources.filter(r => 
+    r.kind === 'Service' && (r.spec?.type === 'LoadBalancer' || r.spec?.type === 'NodePort')
+  );
 
-  // Rule 1: Service Exposure -> Target Resource
-  const services = resources.filter(r => r.kind === 'Service');
-  services.forEach(svc => {
-    const meta = getMetadata(svc);
-    const svcId = `${meta.kind}-${meta.name}`.toLowerCase();
-    
-    if (svc.spec?.type === 'LoadBalancer' || svc.spec?.type === 'NodePort') {
+  if (hasIngress) {
+    paths.push({
+      id: 'ap-external-ingress',
+      source: 'External Internet',
+      target: 'Cluster Ingress',
+      description: 'Attack starts from external network via publicly exposed Ingress controller.',
+      threatLevel: 'low'
+    });
+  } else if (publicServices.length > 0) {
+    publicServices.forEach(svc => {
+      const id = `service-${svc.metadata.name}`.toLowerCase();
       paths.push({
-        id: `ap-ingress-${svcId}`,
-        source: 'Cluster Ingress',
-        target: svcId,
-        description: `Service ${meta.name} is exposed via ${svc.spec.type}.`,
+        id: `ap-entry-svc-${id}`,
+        source: 'External Internet',
+        target: id,
+        description: `Direct access to ${svc.metadata.name} via ${svc.spec.type} exposure.`,
         threatLevel: 'medium'
       });
-    }
-  });
-
-  // Rule 2: Privileged Container -> Node Escape
-  findings.filter(f => f.id === 'PRIVILEGED_CONTAINER').forEach(f => {
-    const targetId = `${f.resource.kind}-${f.resource.name}`.toLowerCase();
+    });
+  } else {
     paths.push({
-      id: `ap-escape-${targetId}`,
-      source: targetId,
+      id: 'ap-entry-default',
+      source: 'External Internet',
+      target: 'Cluster Ingress',
+      description: 'Attempting to find entry points in the cluster perimeter.',
+      threatLevel: 'low'
+    });
+  }
+
+  // 2. Scenario: Host Escape (Privileged + HostPath)
+  findings.filter(f => f.id === 'PRIVILEGED_CONTAINER' || f.id === 'HOST_PATH_VOLUME').forEach(f => {
+    const podId = `${f.resource.kind}-${f.resource.name}`.toLowerCase();
+    const isEscalation = findings.some(f2 => f2.id === 'RUN_AS_ROOT' && f2.resource.name === f.resource.name);
+    
+    paths.push({
+      id: `ap-escape-${podId}-${f.id}`,
+      source: podId,
       target: 'Host Node',
-      description: 'Privileged container allows for full host namespace breakout.',
+      description: f.id === 'PRIVILEGED_CONTAINER' 
+        ? 'Privileged container escape to host kernel.' 
+        : 'HostPath mount allows direct host filesystem access.',
+      threatLevel: isEscalation ? 'high' : 'medium'
+    });
+  });
+
+  // 3. Scenario: Credential Exposure (Sensitive Config)
+  findings.filter(f => f.id === 'SENSITIVE_CONFIG').forEach(f => {
+    const resId = `${f.resource.kind}-${f.resource.name}`.toLowerCase();
+    paths.push({
+      id: `ap-creds-${resId}`,
+      source: resId,
+      target: 'Sensitive Credentials',
+      description: 'Searching configuration for leaked passwords, tokens, or API keys.',
       threatLevel: 'high'
     });
   });
 
-  // Rule 3: Host Network -> Node Network
-  findings.filter(f => f.id === 'HOST_NETWORK').forEach(f => {
-    const targetId = `${f.resource.kind}-${f.resource.name}`.toLowerCase();
-    paths.push({
-      id: `ap-net-escape-${targetId}`,
-      source: targetId,
-      target: 'Host Network',
-      description: 'Host network access allows sniffing host-level traffic.',
-      threatLevel: 'high'
-    });
+  // 4. Scenario: RBAC Escalation
+  findings.filter(f => f.id === 'CLUSTER_ADMIN_RBAC').forEach(f => {
+    // Find the actual resource to extract subjects
+    const binding = resources.find(r => r.kind === f.resource.kind && r.metadata.name === f.resource.name);
+    if (binding && binding.subjects) {
+      binding.subjects.forEach((sub: any) => {
+        const subId = `${sub.kind}-${sub.name}`.toLowerCase();
+        paths.push({
+          id: `ap-rbac-${subId}-${binding.metadata.name}`,
+          source: subId,
+          target: 'Kube-API Server',
+          description: `${sub.kind}/${sub.name} leverages ${binding.roleRef.name} permissions to compromise control plane.`,
+          threatLevel: 'high'
+        });
+      });
+    }
   });
 
   return paths;

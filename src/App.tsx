@@ -52,6 +52,8 @@ import { AttackSimulator } from './pages/AttackSimulator';
 import { Recommendations } from './pages/Recommendations';
 import { YAMLAnalyzer } from './pages/YAMLAnalyzer';
 import { InfrastructureMap } from './pages/InfrastructureMap';
+import { ClusterScan } from './pages/ClusterScan';
+
 
 // App content component
 const AppContent: React.FC = () => {
@@ -96,7 +98,9 @@ const AppContent: React.FC = () => {
         }
       >
         <Route index element={<Dashboard />} />
+        <Route path="cluster-scan" element={<ClusterScan />} />
         <Route path="attack-paths" element={<AttackPaths />} />
+
         <Route path="risk-score" element={<RiskScore />} />
         <Route path="misconfigurations" element={<Misconfigurations />} />
         <Route path="weak-points" element={<WeakPoints />} />
