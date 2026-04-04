@@ -116,7 +116,7 @@ async def scan_yaml(request: YamlScanRequest):
         raise HTTPException(status_code=400, detail=f"Invalid YAML manifest: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
+#this is new feature
 @app.get("/cluster/yaml")
 async def get_cluster_yaml():
     """Returns all non-system pod manifests from the cluster in YAML format."""
