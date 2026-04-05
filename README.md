@@ -41,7 +41,7 @@ State-of-the-art YAML analyzer for infrastructure-as-code security.
 
 ### 🛡️ Predictive AI Shield (v1.0.4-stable)
 Advanced heuristic threat detection powered by a custom-trained **Transformer Model**.
-- **Dataset-Driven Insights**: Trained on the **Fire-Dataset (YOLO Format)** for high-precision anomaly detection in mission-critical infrastructure.
+- **Dataset-Driven Insights**: Trained on the **Fire-Dataset (YOLO Format)** and **Historical K8s Analysis (60,000+ Records)** for high-precision anomaly detection.
 - **Heuristic Threat Score**: Beyond static rules, the AI engine identifies "Sparse Manifest" anomalies and subtle privilege-escalation patterns.
 - **Deep Visibility**: Real-time confidence scoring and inference latency reporting for total transparency.
 

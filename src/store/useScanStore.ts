@@ -4,7 +4,7 @@ import { Finding } from '../lib/scanner/types';
 export interface Misconfiguration {
   id: string;
   title: string;
-  severity: 'high' | 'medium' | 'low';
+  severity: 'critical' | 'high' | 'medium' | 'low';
   description: string;
   fix: string;
   category: string;
@@ -14,7 +14,7 @@ export interface Misconfiguration {
 export interface WeakPoint {
   id: string;
   title: string;
-  severity: 'high' | 'medium' | 'low';
+  severity: 'critical' | 'high' | 'medium' | 'low';
   description: string;
   impact: string;
 }
@@ -24,14 +24,14 @@ export interface AttackPath {
   source: string;
   target: string;
   description: string;
-  threatLevel: 'high' | 'medium' | 'low';
+  threatLevel: 'critical' | 'high' | 'medium' | 'low';
 }
 
 export interface Recommendation {
   id: string;
   title: string;
   action: string;
-  priority: 'high' | 'medium' | 'low';
+  priority: 'critical' | 'high' | 'medium' | 'low';
   impact: string;
 }
 

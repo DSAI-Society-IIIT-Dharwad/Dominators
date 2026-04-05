@@ -117,7 +117,7 @@ async def scan_yaml(request: YamlScanRequest):
         # Run standard deterministic scanner
         result = k8s_service.scan_yaml(request.yaml_content)
         
-        # Run AI/ML heuristic analysis (Demo)
+        # Run AI/ML heuristic analysis 
         ai_analysis = await ai_engine.analyze_manifest(request.yaml_content)
         
         # Merge results

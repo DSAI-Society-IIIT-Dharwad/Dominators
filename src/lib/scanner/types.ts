@@ -1,4 +1,4 @@
-export type Severity = 'HIGH' | 'MEDIUM' | 'LOW';
+export type Severity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
 export interface ResourceInfo {
   kind: string;
