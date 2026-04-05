@@ -29,6 +29,14 @@ class ScanResult(BaseModel):
 class YamlScanRequest(BaseModel):
     yaml_content: str
 
+class AIResult(BaseModel):
+    model_version: str
+    confidence_score: float
+    inference_latency: str
+    risk_assessment: str
+    risk_level: str
+    analyzed_at: str
+
 class YamlFinding(BaseModel):
     name: str
     namespace: str
@@ -47,6 +55,7 @@ class YamlScanResponse(BaseModel):
     timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
     summary: YamlSummary
     findings: List[YamlFinding]
+    ai_analysis: Optional[AIResult] = None
 
 # Real-Time Cluster Scanner Models
 class ClusterFinding(BaseModel):

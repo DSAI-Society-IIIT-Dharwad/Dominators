@@ -13,6 +13,7 @@ from typing import List
 import yaml
 import asyncio
 from datetime import datetime
+from ai_engine import ai_engine
 
 app = FastAPI(title="KubeShield API", description="Live & YAML Kubernetes Security Monitoring")
 
@@ -65,6 +66,8 @@ async def cluster_scan_task():
 
 @app.on_event("startup")
 async def startup_event():
+    # Load AI model weights in background
+    asyncio.create_task(ai_engine.load_weights())
     # Start the background cluster scanner
     asyncio.create_task(cluster_scan_task())
 
@@ -111,7 +114,17 @@ async def get_live_scan():
 @app.post("/scan/yaml", response_model=YamlScanResponse)
 async def scan_yaml(request: YamlScanRequest):
     try:
-        return k8s_service.scan_yaml(request.yaml_content)
+        # Run standard deterministic scanner
+        result = k8s_service.scan_yaml(request.yaml_content)
+        
+        # Run AI/ML heuristic analysis (Demo)
+        ai_analysis = await ai_engine.analyze_manifest(request.yaml_content)
+        
+        # Merge results
+        result_dict = result.dict()
+        result_dict["ai_analysis"] = ai_analysis
+        
+        return result_dict
     except yaml.YAMLError as e:
         raise HTTPException(status_code=400, detail=f"Invalid YAML manifest: {str(e)}")
     except Exception as e:

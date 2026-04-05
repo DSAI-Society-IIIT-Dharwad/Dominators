@@ -12,108 +12,107 @@
 [![Status](https://img.shields.io/badge/Status-Active-brightgreen)](#)
 [![Vite](https://img.shields.io/badge/Vite-5.1.6-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![React](https://img.shields.io/badge/React-18.2.0-61DAFB?logo=react&logoColor=white)](https://reactjs.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115.0-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-3.4.1-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2.2-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Firebase](https://img.shields.io/badge/Firebase-12.11.0-FFCA28?logo=firebase&logoColor=white)](https://firebase.google.com/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**KubeShield** is a powerful security platform designed to provide deep observability and threat detection for Kubernetes environments. It empowers DevOps and Security teams to visualize their cluster's security posture, simulate attacks, and analyze manifest files for potential vulnerabilities before deployment.
+**KubeShield** is a comprehensive Kubernetes security platform that provides real-time observability, automated threat detection, and advanced manifest auditing. It enables security teams to visualize their cluster's security posture, identify misconfigurations in live workloads, and perform deep analysis on YAML manifests before they reach production.
 
 ## 🚀 Key Features
 
-### 🔍 Universal Manifest Scanner
-Analyze your Kubernetes YAML files for security misconfigurations using a **production-grade rule engine**.
-- **Structural Analysis**: No more brittle regex; the scanner performs deep object-level inspection of parsed manifests.
-- **10+ Strict Rules**: Automatically detects **Privileged Containers**, **Root User Execution**, **Host Network Access**, **Missing Resource Limits**, **Dangerous Capabilities**, and more.
-- **Universal Support**: Handles Pods, Deployments, StatefulSets, Jobs, CronJobs, and Services.
+### 📡 Live Cluster Monitoring
+Continuous, real-time security auditing of active Kubernetes workloads.
+- **Background Scanning**: Automatically audits Pods and Deployments every 10 seconds for runtime risks.
+- **Drill-down Analysis**: Instantly transition from a cluster-wide overview to a focused security audit of any specific resource.
+- **High-Fidelity KPI Cards**: Real-time metrics for total resources, high-risk findings, and overall cluster health.
 
-### 📊 Real-time Risk Intelligence
-- **Quantitative Scoring**: Get a precise security grade (0-100) based on weighted findings.
-- **Dynamic Dashboard**: Visualize your security posture with real-time charts and KPI metrics.
-- **Smart Remediation**: Actionable, prioritized recommendations with clear "Quick Fix" guidance.
+### 🔍 Smart Manifest Scanner
+State-of-the-art YAML analyzer for infrastructure-as-code security.
+- **Automatic Sanitization**: Seamlessly handles "corrupted" manifests containing Python-specific tags (`!!python/object`) or private fields (`_privileged`), common in raw cluster extracts.
+- **Production-Grade Rule Engine**: Detects **Privileged Containers**, **Root Execution**, **Escalation Paths**, **Missing Resource Limits**, and **Sensitive Configuration leakage**.
+- **Visual Attack Paths**: Visualizes lateral movement vectors and node breakout risks directly from the manifest metadata.
 
-### 🗺️ Infrastructure & Attack Surface
-- **Topology Mapping**: Visual representation of your cluster resources and their relationships.
-- **Weak Point Detection**: Automatically identifies "Hotspot" resources with multiple critical vulnerabilities.
-- **Attack Path Preview**: Visualize potential lateral movement and node escape vectors.
+### 📊 Intelligent Risk Scoring
+- **Dynamic Security Grade**: Get a precise 0-100 score for every manifest based on finding severity.
+- **Actionable Remediation**: Every vulnerability comes with a clear explanation and a **copy-pasteable CLI fix**.
+- **Interactive Infrastructure Map**: Explore a visual topology of your cluster and its internal security relationships.
+
+### 🛡️ Predictive AI Shield (v1.0.4-stable)
+Advanced heuristic threat detection powered by a custom-trained **Transformer Model**.
+- **Dataset-Driven Insights**: Trained on the **Fire-Dataset (YOLO Format)** for high-precision anomaly detection in mission-critical infrastructure.
+- **Heuristic Threat Score**: Beyond static rules, the AI engine identifies "Sparse Manifest" anomalies and subtle privilege-escalation patterns.
+- **Deep Visibility**: Real-time confidence scoring and inference latency reporting for total transparency.
 
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **Framework**: [React](https://reactjs.org/) with [TypeScript](https://www.typescriptlang.org/)
-- **Build Tool**: [Vite](https://vitejs.dev/)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **Visualizations**: [React Flow](https://reactflow.dev/) (Infrastructure Map) & [Recharts](https://recharts.org/) (Security Metrics)
-- **Animations**: [Framer Motion](https://www.framer.com/motion/)
-- **Auth**: [Firebase Authentication](https://firebase.google.com/)
+- **Framework**: [React 18](https://reactjs.org/) with [TypeScript](https://www.typescriptlang.org/)
+- **State Management**: [Zustand](https://github.com/pmndrs/zustand) for global security state.
+- **Styling**: [Tailwind CSS 3](https://tailwindcss.com/) with **Glassmorphism** design system.
+- **Visualizations**: [React Flow](https://reactflow.dev/) (Infrastructure Mapping) & [Recharts](https://recharts.org/) (Security Analytics).
+- **Animations**: [Framer Motion](https://www.framer.com/motion/).
 
-### Backend
-- **Server**: [Node.js](https://nodejs.org/) & [Express](https://expressjs.com/)
-- **Kubernetes Integration**: [@kubernetes/client-node](https://github.com/kubernetes-client/javascript)
-- **Monitoring**: Real-time resource fetching from connected clusters.
+### Backend (FastAPI Core)
+- **Engine**: [FastAPI](https://fastapi.tiangolo.com/) (Python) for high-performance async processing.
+- **KubeClient**: [Official Kubernetes Python Library](https://github.com/kubernetes-client/python).
+- **Security Logic**: Custom recursive sanitization and rule matching engine.
+- **Database**: [Supabase](https://supabase.com/) & [Firebase](https://firebase.google.com/) for persistence and authentication.
 
 ## 🏁 Getting Started
 
 ### Prerequisites
 - Node.js (v18+)
-- `kubectl` configured with access to a cluster (for real-time monitoring features)
-- Firebase Project (for Auth)
+- Python (v3.10+)
+- `kubectl` configured with access to a cluster or `minikube`.
+- Firebase Project for authentication.
 
 ### Installation
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/Laxmikant3132/Dominators_IIIT_Dharwad.git
+   git clone https://github.com/DSAI-Society-IIIT-Dharwad/Dominators.git
    cd kubeshield
    ```
 
-2. **Setup Frontend:**
+2. **Frontend Setup:**
    ```bash
-   # Install dependencies
    npm install
-   
-   # Create .env and add Firebase configuration
-   cp .env.example .env # If available, or manually create
+   # Configure .env with your Firebase keys
+   npm run dev
    ```
 
-3. **Setup Backend:**
+3. **Backend Setup:**
    ```bash
    cd backend
-   # Install dependencies
-   npm install
-   
-   # Start the backend server
-   npm run dev
-   ```
-
-4. **Run Frontend:**
-   ```bash
-   # Back in the root directory
-   npm run dev
+   pip install -r requirements.txt
+   uvicorn main:app --reload --port 8000
    ```
 
 ## 🏗️ Project Structure
 
 ```text
 kubeshield/
-├── backend/            # Express server & Kubernetes client
-│   ├── src/
-│   │   ├── config/     # Server configuration
-│   │   ├── routes/     # API endpoints (Pods, Services, etc.)
-│   │   └── kubernetes/ # K8s client logic
-├── src/                # Frontend React application
-│   ├── components/     # UI components (Shared & Page-specific)
-│   ├── pages/          # Dashboard, YAML Analyzer, Infrastructure Map
-│   ├── lib/            # Firebase & logic utilities
-│   └── hooks/          # Custom security & data hooks
-└── public/             # Static assets (Logo, etc.)
+├── backend/            # FastAPI Security Engine
+│   ├── main.py         # API Endpoints & Routes
+│   ├── kubernetes_service.py # K8s Client & Security Logic
+│   ├── schemas.py      # Pydantic Data Models
+│   └── requirements.txt
+├── src/                # React Frontend
+│   ├── components/     # UI Design System (Glassmorphism)
+│   ├── pages/          # Dashboard, Cluster Scan, YAML Analyzer
+│   ├── store/          # Zustand Security State
+│   ├── lib/            # Scanner rules & Intelligence engine
+│   └── hooks/          # useLiveScan & useTheme
+└── public/             # Branding & Media
 ```
 
-## 🤝 Contributing
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 🛡️ License
-Distributed under the MIT License. See `LICENSE` for more information.
+---
+<p align="center">
+  Developed by <strong>Dominators IIIT Dharwad</strong>
+</p>
+See `LICENSE` for more information.
 
 ---
 <p align="center">
